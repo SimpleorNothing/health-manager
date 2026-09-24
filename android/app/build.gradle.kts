@@ -1,6 +1,6 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
 android {
- namespace = "io.github.simpleornothing.healthmanager"; compileSdk = 35
+ namespace = "io.github.simpleornothing.healthmanager"; compileSdk = 36
  defaultConfig { applicationId = "io.github.simpleornothing.healthmanager"; minSdk = 28; targetSdk = 35; versionCode = 1; versionName = "0.1.0" }
 }
 dependencies {
