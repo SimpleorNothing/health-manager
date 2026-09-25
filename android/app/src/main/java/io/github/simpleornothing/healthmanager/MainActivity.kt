@@ -22,5 +22,8 @@ class MainActivity:ComponentActivity(){
  }
  private fun refreshHealth(){lifecycleScope.launch{if(!repo.hasPermissions())return@launch;val s=repo.today();val j=JSONObject()
   j.put("glucose",s.glucoseMgDl);j.put("weight",s.weightKg);j.put("bodyFat",s.bodyFatPct);j.put("steps",s.steps);j.put("exerciseMinutes",s.exerciseMinutes);j.put("calories",s.caloriesKcal)
+  val history=repo.history(30); val a=org.json.JSONArray()
+  history.forEach{d->val o=JSONObject();o.put("date",d.date);o.put("glucose",d.glucoseMgDl);o.put("weight",d.weightKg);o.put("bodyFat",d.bodyFatPct);o.put("steps",d.steps);o.put("exerciseMinutes",d.exerciseMinutes);o.put("calories",d.caloriesKcal);a.put(o)}
+  j.put("history",a)
   web.evaluateJavascript("window.receiveHealthConnectData && window.receiveHealthConnectData("+j.toString()+")",null)}}
 }
