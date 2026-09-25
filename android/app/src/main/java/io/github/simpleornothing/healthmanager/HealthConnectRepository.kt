@@ -11,6 +11,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
+data class HealthDay(val date:String,val glucoseMgDl:Double?,val weightKg:Double?,val bodyFatPct:Double?,val steps:Long,val exerciseMinutes:Long,val caloriesKcal:Double?)
 data class HealthSnapshot(val glucoseMgDl:Double?,val weightKg:Double?,val bodyFatPct:Double?,val steps:Long,val exerciseMinutes:Long,val caloriesKcal:Double?)
 class HealthConnectRepository(context:Context){
  val client=HealthConnectClient.getOrCreate(context)
@@ -28,5 +29,18 @@ class HealthConnectRepository(context:Context){
   val agg=client.aggregate(AggregateRequest(setOf(StepsRecord.COUNT_TOTAL,TotalCaloriesBurnedRecord.ENERGY_TOTAL),range))
   return HealthSnapshot(glucose?.level?.inMilligramsPerDeciliter,weight?.weight?.inKilograms,fat?.percentage?.value,
    agg[StepsRecord.COUNT_TOTAL]?:0L,exercises.sumOf{ChronoUnit.MINUTES.between(it.startTime,it.endTime)},agg[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories)
+ }
+ suspend fun history(days:Long=30):List<HealthDay>{
+  val zone=ZoneId.systemDefault(); val today=LocalDate.now(); val out=mutableListOf<HealthDay>()
+  for(i in (days-1) downTo 0){
+   val day=today.minusDays(i); val start=day.atStartOfDay(zone).toInstant(); val end=day.plusDays(1).atStartOfDay(zone).toInstant(); val range=TimeRangeFilter.between(start,end)
+   val glucose=client.readRecords(ReadRecordsRequest(BloodGlucoseRecord::class,range)).records.maxByOrNull{it.time}
+   val weight=client.readRecords(ReadRecordsRequest(WeightRecord::class,range)).records.maxByOrNull{it.time}
+   val fat=client.readRecords(ReadRecordsRequest(BodyFatRecord::class,range)).records.maxByOrNull{it.time}
+   val exercises=client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class,range)).records
+   val agg=client.aggregate(AggregateRequest(setOf(StepsRecord.COUNT_TOTAL,TotalCaloriesBurnedRecord.ENERGY_TOTAL),range))
+   out.add(HealthDay(day.toString(),glucose?.level?.inMilligramsPerDeciliter,weight?.weight?.inKilograms,fat?.percentage?.value,agg[StepsRecord.COUNT_TOTAL]?:0L,exercises.sumOf{ChronoUnit.MINUTES.between(it.startTime,it.endTime)},agg[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories))
+  }
+  return out
  }
 }
