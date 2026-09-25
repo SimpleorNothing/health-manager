@@ -13,9 +13,9 @@ class MainActivity:ComponentActivity(){
  private lateinit var repo:HealthConnectRepository; private lateinit var web:WebView
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);repo=HealthConnectRepository(this)
   web=WebView(this).apply{settings.javaScriptEnabled=true;settings.domStorageEnabled=true;webViewClient=WebViewClient();addJavascriptInterface(Bridge(),"HealthManager");loadUrl("https://simpleornothing.github.io/health-manager/")};setContentView(web)}
- private val permissionLauncher=registerForActivityResult(PermissionController.createRequestPermissionResultContract()){refreshHealth()}
+ private val permissionLauncher=registerForActivityResult(PermissionController.createRequestPermissionResultContract()){ refreshHealth() }
  inner class Bridge{
-  @JavascriptInterface fun requestHealthPermissions()=runOnUiThread{lifecycleScope.launch{if(repo.hasPermissions())refreshHealth() else permissionLauncher.launch(repo.permissions)}}
+  @JavascriptInterface fun requestHealthPermissions(){ runOnUiThread { lifecycleScope.launch { try { if(repo.hasPermissions()) refreshHealth() else permissionLauncher.launch(repo.permissions) } catch(e:Exception) { web.evaluateJavascript("window.receiveHealthConnectError && window.receiveHealthConnectError("+JSONObject.quote(e.message ?: "Health Connect 권한 요청 실패")+")",null) } } } }
   @JavascriptInterface fun refreshHealthData()=refreshHealth()
  }
  private fun refreshHealth(){lifecycleScope.launch{if(!repo.hasPermissions())return@launch;val s=repo.today();val j=JSONObject()
