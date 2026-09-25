@@ -1,16 +1,15 @@
 package io.github.simpleornothing.healthmanager
-import android.app.Activity
 import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.ComponentActivity
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
-class MainActivity:Activity(){
+class MainActivity:ComponentActivity(){
  private lateinit var repo:HealthConnectRepository; private lateinit var web:WebView
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);repo=HealthConnectRepository(this)
   web=WebView(this).apply{settings.javaScriptEnabled=true;settings.domStorageEnabled=true;webViewClient=WebViewClient();addJavascriptInterface(Bridge(),"HealthManager");loadUrl("https://simpleornothing.github.io/health-manager/")};setContentView(web)}
