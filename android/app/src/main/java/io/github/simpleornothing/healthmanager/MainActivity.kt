@@ -25,5 +25,6 @@ class MainActivity:ComponentActivity(){
   val history=repo.history(30); val a=org.json.JSONArray()
   history.forEach{d->val o=JSONObject();o.put("date",d.date);o.put("glucose",d.glucoseMgDl);o.put("weight",d.weightKg);o.put("bodyFat",d.bodyFatPct);o.put("leanBodyMass",d.leanBodyMassKg);o.put("steps",d.steps);o.put("exerciseMinutes",d.exerciseMinutes);o.put("calories",d.caloriesKcal);a.put(o)}
   j.put("history",a)
+  val diag=repo.diagnostics(); val dj=JSONObject(); diag.forEach{(k,v)->dj.put(k,v)}; j.put("diagnostics",dj)
   web.evaluateJavascript("window.receiveHealthConnectData && window.receiveHealthConnectData("+j.toString()+")",null)}}
 }
