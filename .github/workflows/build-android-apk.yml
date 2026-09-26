@@ -24,6 +24,8 @@ jobs:
         with:
           gradle-version: "8.11.1"
       - name: Build debug APK
+        env:
+          HEALTH_API_TOKEN: ${{ secrets.HEALTH_API_TOKEN }}
         run: gradle assembleDebug --stacktrace
       - name: Prepare APK
         run: cp app/build/outputs/apk/debug/app-debug.apk ../health-manager-s25.apk
