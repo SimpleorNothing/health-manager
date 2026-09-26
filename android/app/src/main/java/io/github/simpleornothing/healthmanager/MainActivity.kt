@@ -3,6 +3,7 @@ import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebSettings
 import android.webkit.WebChromeClient
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -17,7 +18,7 @@ import java.util.UUID
 class MainActivity:ComponentActivity(){
  private lateinit var repo:HealthConnectRepository; private lateinit var web:WebView
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);repo=HealthConnectRepository(this)
-  web=WebView(this).apply{settings.javaScriptEnabled=true;settings.domStorageEnabled=true;webViewClient=WebViewClient();webChromeClient=WebChromeClient();addJavascriptInterface(Bridge(),"HealthManager");loadUrl("https://simpleornothing.github.io/health-manager/")};setContentView(web)}
+  web=WebView(this).apply{settings.javaScriptEnabled=true;settings.domStorageEnabled=true;settings.cacheMode=WebSettings.LOAD_NO_CACHE;clearCache(true);webViewClient=WebViewClient();webChromeClient=WebChromeClient();addJavascriptInterface(Bridge(),"HealthManager");loadUrl("https://simpleornothing.github.io/health-manager/?app="+BuildConfig.VERSION_CODE)};setContentView(web)}
  private val permissionLauncher=registerForActivityResult(PermissionController.createRequestPermissionResultContract()){ refreshHealth() }
  inner class Bridge{
   @JavascriptInterface fun requestHealthPermissions(){ runOnUiThread { Toast.makeText(this@MainActivity,"Health Connect 권한을 확인합니다",Toast.LENGTH_SHORT).show(); lifecycleScope.launch { try { if(repo.hasPermissions()){ Toast.makeText(this@MainActivity,"Health Connect 권한이 이미 허용되어 있습니다",Toast.LENGTH_SHORT).show(); refreshHealth() } else { permissionLauncher.launch(repo.permissions) } } catch(e:Exception) { Toast.makeText(this@MainActivity,"Health Connect 오류: "+(e.message ?: "권한 요청 실패"),Toast.LENGTH_LONG).show(); web.evaluateJavascript("window.receiveHealthConnectError && window.receiveHealthConnectError("+JSONObject.quote(e.message ?: "Health Connect 권한 요청 실패")+")",null) } } } }
