@@ -10,6 +10,9 @@ import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.UUID
 
 class MainActivity:ComponentActivity(){
  private lateinit var repo:HealthConnectRepository; private lateinit var web:WebView
@@ -19,6 +22,7 @@ class MainActivity:ComponentActivity(){
  inner class Bridge{
   @JavascriptInterface fun requestHealthPermissions(){ runOnUiThread { Toast.makeText(this@MainActivity,"Health Connect 권한을 확인합니다",Toast.LENGTH_SHORT).show(); lifecycleScope.launch { try { if(repo.hasPermissions()){ Toast.makeText(this@MainActivity,"Health Connect 권한이 이미 허용되어 있습니다",Toast.LENGTH_SHORT).show(); refreshHealth() } else { permissionLauncher.launch(repo.permissions) } } catch(e:Exception) { Toast.makeText(this@MainActivity,"Health Connect 오류: "+(e.message ?: "권한 요청 실패"),Toast.LENGTH_LONG).show(); web.evaluateJavascript("window.receiveHealthConnectError && window.receiveHealthConnectError("+JSONObject.quote(e.message ?: "Health Connect 권한 요청 실패")+")",null) } } } }
   @JavascriptInterface fun refreshHealthData()=refreshHealth()
+  @JavascriptInterface fun syncHealthRecords(json:String){ lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO){ try { val c=(URL("https://health-manager-api.cw120-park.workers.dev/health").openConnection() as HttpURLConnection); c.requestMethod="POST"; c.setRequestProperty("content-type","application/json"); c.setRequestProperty("authorization","Bearer "+BuildConfig.HEALTH_API_TOKEN); c.doOutput=true; c.outputStream.use{it.write(json.toByteArray())}; val code=c.responseCode; runOnUiThread{web.evaluateJavascript("window.receiveServerSyncResult && window.receiveServerSyncResult("+code+")",null)}; c.disconnect() }catch(e:Exception){runOnUiThread{web.evaluateJavascript("window.receiveHealthConnectError && window.receiveHealthConnectError("+JSONObject.quote("서버 동기화 실패: "+(e.message?:"오류"))+")",null)}} } }
  }
  private fun refreshHealth(){lifecycleScope.launch{if(!repo.hasPermissions())return@launch;val s=repo.today();val j=JSONObject()
   j.put("glucose",s.glucoseMgDl);j.put("weight",s.weightKg);j.put("bodyFat",s.bodyFatPct);j.put("leanBodyMass",s.leanBodyMassKg);j.put("steps",s.steps);j.put("exerciseMinutes",s.exerciseMinutes);j.put("calories",s.caloriesKcal)
