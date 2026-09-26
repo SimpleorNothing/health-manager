@@ -1,0 +1,29 @@
+name: Deploy Health API
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["worker/**",".github/workflows/deploy-health-api.yml"]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g wrangler
+      - name: Verify D1 id configured
+        run: |
+          if grep -q REPLACE_WITH_D1_DATABASE_ID wrangler.toml; then
+            echo "Set the D1 database_id in worker/wrangler.toml before deployment."
+            exit 1
+          fi
+      - run: wrangler d1 execute health-manager --remote --file=schema.sql
+      - run: wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
