@@ -25,9 +25,10 @@ class HealthConnectRepository(context:Context){
  suspend fun today():HealthSnapshot{
   val end=Instant.now(); val start=LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant(); val range=TimeRangeFilter.between(start,end)
   val glucose=client.readRecords(ReadRecordsRequest(BloodGlucoseRecord::class,range)).records.maxByOrNull{it.time}
-  val weight=client.readRecords(ReadRecordsRequest(WeightRecord::class,range)).records.maxByOrNull{it.time}
-  val fat=client.readRecords(ReadRecordsRequest(BodyFatRecord::class,range)).records.maxByOrNull{it.time}
-  val lean=client.readRecords(ReadRecordsRequest(LeanBodyMassRecord::class,range)).records.maxByOrNull{it.time}
+  val latestBodyRange=TimeRangeFilter.between(end.minus(365,ChronoUnit.DAYS),end)
+  val weight=client.readRecords(ReadRecordsRequest(WeightRecord::class,latestBodyRange)).records.maxByOrNull{it.time}
+  val fat=client.readRecords(ReadRecordsRequest(BodyFatRecord::class,latestBodyRange)).records.maxByOrNull{it.time}
+  val lean=client.readRecords(ReadRecordsRequest(LeanBodyMassRecord::class,latestBodyRange)).records.maxByOrNull{it.time}
   val exercises=client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class,range)).records
   val agg=client.aggregate(AggregateRequest(setOf(StepsRecord.COUNT_TOTAL,TotalCaloriesBurnedRecord.ENERGY_TOTAL),range))
   return HealthSnapshot(glucose?.level?.inMilligramsPerDeciliter,weight?.weight?.inKilograms,fat?.percentage?.value,lean?.mass?.inKilograms,
