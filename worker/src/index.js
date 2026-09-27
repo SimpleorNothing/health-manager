@@ -9,9 +9,11 @@ export default {async fetch(req,env){
    const body=await req.json(); if(!body.image)return json({error:"image_required"},400,origin);
    const bytes=Uint8Array.from(atob(body.image),c=>c.charCodeAt(0));
    const prompt='Analyze this meal photo for a Korean health-management app. Identify visible foods and estimate edible portions. Return ONLY valid JSON with keys: items (array of {name,portion}), kcal, carbs, protein, fat, fiber, glucoseImpact (one of 낮음,중간,높음), confidence (one of 낮음,중간,높음). Numbers must be numeric estimates. Do not use markdown.';
-   const out=await env.AI.run("@cf/meta/llama-3.2-11b-vision-instruct",{messages:[{role:"user",content:[{type:"text",text:prompt},{type:"image",image:Array.from(bytes)}]}],max_tokens:700});
-   const raw=out.response||out.result||out; const text=typeof raw==="string"?raw:JSON.stringify(raw); const match=text.match(/\{[\s\S]*\}/); if(!match)throw new Error("invalid_model_output");
-   return json(JSON.parse(match[0]),200,origin);
+   const out=await env.AI.run("@cf/meta/llama-3.2-11b-vision-instruct",{prompt,image:[...bytes],max_tokens:700});
+   const raw=out?.response??out?.result??out; const text=typeof raw==="string"?raw:JSON.stringify(raw); const match=text.match(/\{[\s\S]*\}/); if(!match)throw new Error("invalid_model_output: "+text.slice(0,160));
+   const parsed=JSON.parse(match[0]); for(const k of ["kcal","carbs","protein","fat","fiber"])parsed[k]=Number(parsed[k])||0;
+   if(!Array.isArray(parsed.items))parsed.items=[]; if(!["낮음","중간","높음"].includes(parsed.glucoseImpact))parsed.glucoseImpact="중간"; if(!["낮음","중간","높음"].includes(parsed.confidence))parsed.confidence="중간";
+   return json(parsed,200,origin);
   }catch(e){return json({error:"analysis_failed",detail:String(e.message||e)},502,origin)}
  }
  if(u.pathname==="/health"&&req.method==="GET"){const r=await env.DB.prepare("SELECT * FROM health_records ORDER BY recorded_at DESC LIMIT 2000").all();return json(r.results,200,origin);}
