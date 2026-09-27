@@ -8,3 +8,5 @@
 .card.complete{background:#e8f8f1;border-color:#93dfc2;box-shadow:0 3px 12px #087f5b14}.card.complete .ico,.card.complete small,.card.complete .done{color:#087f5b}.card.complete strong{color:#075e46}.card.complete .done{font-weight:700}.hero>strong{display:block}
 
 .hero>strong{text-align:center;width:100%}
+
+.photo-pick{display:block;margin:10px 0}.photo-pick input{position:absolute;opacity:0;width:1px;height:1px}.photo-pick span{display:block;padding:12px;border:1px dashed #08a66b;border-radius:12px;text-align:center;font-weight:700;color:#087f5b;background:#f0fbf6;cursor:pointer}.meal-photo{display:block;width:100%;max-height:240px;object-fit:cover;border-radius:14px;margin:10px 0}.photo-result{display:grid;gap:5px;padding:12px;margin:10px 0;border-radius:12px;background:#eefaf5}.photo-result b{font-size:18px;color:#075e46}.photo-result span,.photo-result small{display:block}
