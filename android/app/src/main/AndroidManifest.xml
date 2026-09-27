@@ -14,5 +14,5 @@
   <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
  </application>
     <!-- Build latest APK 2026-09-27 -->
-    <!-- Package all health project updates through 2026-09-27 -->
+    <!-- Package all health project updates through 2026-09-27; meal scroll/save fix -->
 </manifest>
