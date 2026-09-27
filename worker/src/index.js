@@ -3,7 +3,16 @@ function auth(req,env){const h=req.headers.get("authorization")||"";return env.H
 export default {async fetch(req,env){
  const origin=req.headers.get("origin")||"*"; if(req.method==="OPTIONS")return json({ok:true},200,origin);
  const u=new URL(req.url);
- if(u.pathname!=="/analyze-meal"&&!auth(req,env))return json({error:"unauthorized"},401,origin);
+ if(u.pathname!=="/analyze-meal"&&u.pathname!=="/analyze-meal-text"&&!auth(req,env))return json({error:"unauthorized"},401,origin);
+ if(u.pathname==="/analyze-meal-text"&&req.method==="POST"){
+  try{
+   if(!env.OPENAI_API_KEY)return json({error:"openai_key_missing"},500,origin);
+   const body=await req.json();const text=String(body.text||"").trim();if(!text)return json({error:"text_required"},400,origin);
+   const prompt="Analyze this Korean meal text: "+text+". Interpret quantities such as '피자 2조각'. Estimate total calories, carbohydrate, protein, fat, fiber and likely glucose impact. Return estimates, not false precision. Return only JSON.";
+   const response=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Authorization":"Bearer "+env.OPENAI_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-5.6-terra",reasoning:{effort:"low"},input:prompt,text:{format:{type:"json_schema",name:"meal_text_analysis",strict:true,schema:{type:"object",additionalProperties:false,properties:{kcal:{type:"number"},carbs:{type:"number"},protein:{type:"number"},fat:{type:"number"},fiber:{type:"number"},glucoseImpact:{type:"string",enum:["낮음","중간","높음"]},confidence:{type:"string",enum:["낮음","중간","높음"]}},required:["kcal","carbs","protein","fat","fiber","glucoseImpact","confidence"]}}},max_output_tokens:1000})});
+   const data=await response.json();if(!response.ok)return json({error:"openai_error",detail:data?.error?.message||"request_failed"},502,origin);let out=data.output_text||"";if(!out)for(const item of data.output||[])for(const part of item.content||[])if(part.type==="output_text")out+=part.text||"";return json(JSON.parse(out),200,origin);
+  }catch(e){return json({error:"analysis_failed",detail:String(e.message||e)},502,origin)}
+ }
  if(u.pathname==="/analyze-meal"&&req.method==="POST"){
   try{
    if(!env.OPENAI_API_KEY)return json({error:"openai_key_missing"},500,origin);
