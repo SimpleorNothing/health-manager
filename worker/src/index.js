@@ -6,14 +6,14 @@ export default {async fetch(req,env){
  if(u.pathname!=="/analyze-meal"&&!auth(req,env))return json({error:"unauthorized"},401,origin);
  if(u.pathname==="/analyze-meal"&&req.method==="POST"){
   try{
-   const body=await req.json(); if(!body.image)return json({error:"image_required"},400,origin);
-   const imageBase64='data:'+(body.mimeType||'image/jpeg')+';base64,'+body.image;
-   const prompt='Analyze this meal photo for a Korean health-management app. Identify visible foods and estimate edible portions. Return ONLY valid JSON with keys: items (array of {name,portion}), kcal, carbs, protein, fat, fiber, glucoseImpact (one of 낮음,중간,높음), confidence (one of 낮음,중간,높음). Numbers must be numeric estimates. Do not use markdown.';
-   const out=await env.AI.run("@cf/meta/llama-3.2-11b-vision-instruct",{messages:[{role:"system",content:"You analyze meal photos and return nutrition estimates as strict JSON only."},{role:"user",content:prompt}],image:imageBase64,max_tokens:700,temperature:0.2});
-   const raw=out?.response??out?.result??out; const text=typeof raw==="string"?raw:JSON.stringify(raw); const match=text.match(/\{[\s\S]*\}/); if(!match)throw new Error("invalid_model_output: "+text.slice(0,160));
-   const parsed=JSON.parse(match[0]); for(const k of ["kcal","carbs","protein","fat","fiber"])parsed[k]=Number(parsed[k])||0;
-   if(!Array.isArray(parsed.items))parsed.items=[]; if(!["낮음","중간","높음"].includes(parsed.glucoseImpact))parsed.glucoseImpact="중간"; if(!["낮음","중간","높음"].includes(parsed.confidence))parsed.confidence="중간";
-   return json(parsed,200,origin);
+   if(!env.OPENAI_API_KEY)return json({error:"openai_key_missing"},500,origin);
+   const body=await req.json();if(!body.image)return json({error:"image_required"},400,origin);
+   const imageUrl="data:"+(body.mimeType||"image/jpeg")+";base64,"+body.image;
+   const prompt="Analyze this meal photo for a Korean health app. Identify visible foods and estimate portions, calories, carbohydrate, protein, fat and fiber. Estimate likely glucose impact from meal composition. Use Korean food names. Return only JSON.";
+   const response=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Authorization":"Bearer "+env.OPENAI_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-5.6-terra",reasoning:{effort:"low"},input:[{role:"user",content:[{type:"input_text",text:prompt},{type:"input_image",image_url:imageUrl,detail:"high"}]}],text:{format:{type:"json_object"}},max_output_tokens:1000})});
+   const data=await response.json();if(!response.ok)return json({error:"openai_error",status:response.status,detail:data?.error?.message||"request_failed"},502,origin);
+   let out=data.output_text||"";if(!out)for(const item of data.output||[])for(const part of item.content||[])if(part.type==="output_text")out+=part.text||"";
+   const parsed=JSON.parse(out);parsed.model="gpt-5.6-terra";return json(parsed,200,origin);
   }catch(e){return json({error:"analysis_failed",detail:String(e.message||e)},502,origin)}
  }
  if(u.pathname==="/health"&&req.method==="GET"){const r=await env.DB.prepare("SELECT * FROM health_records ORDER BY recorded_at DESC LIMIT 2000").all();return json(r.results,200,origin);}
