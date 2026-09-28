@@ -9,6 +9,7 @@
  <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
  <queries><package android:name="com.google.android.apps.healthdata"/></queries>
  <application android:theme="@style/AppTheme" android:label="건강관리" android:icon="@drawable/ic_launcher" android:roundIcon="@drawable/ic_launcher">
+  <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true"><meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths"/></provider>
   <activity-alias android:name=".ViewPermissionUsageActivity" android:exported="true" android:targetActivity=".PermissionsRationaleActivity" android:permission="android.permission.START_VIEW_PERMISSION_USAGE"><intent-filter><action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/><category android:name="android.intent.category.HEALTH_PERMISSIONS"/></intent-filter></activity-alias>
   <activity android:name=".PermissionsRationaleActivity" android:exported="true"><intent-filter><action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/></intent-filter></activity>
   <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
