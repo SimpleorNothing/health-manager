@@ -1,6 +1,10 @@
 // Keep this list in release order when user-facing behavior changes.
 export const appChanges = [
   {
+    date: '2026. 9. 29.',
+    changes: ['입력·수정·삭제 기록을 서버에 자동 저장하고, 새 설치 시 서버 기록을 자동 복원하도록 개선했습니다.'],
+  },
+  {
     date: '2026. 9. 27.',
     changes: [
       '설정에서 앱 수정이력을 확인할 수 있습니다.',
