@@ -3,6 +3,7 @@ function auth(req,env){const h=req.headers.get("authorization")||"";return env.H
 export default {async fetch(req,env){
  const origin=req.headers.get("origin")||"*"; if(req.method==="OPTIONS")return json({ok:true},200,origin);
  const u=new URL(req.url);
+ if(u.pathname==='/healthz'&&req.method==='GET')return json({ok:true,service:'health-manager-api'},200,origin);
  if(u.pathname!=="/analyze-meal"&&u.pathname!=="/analyze-meal-text"&&!auth(req,env))return json({error:"unauthorized"},401,origin);
  if(u.pathname==="/analyze-meal-text"&&req.method==="POST"){
   try{

@@ -26,4 +26,8 @@ jobs:
             exit 1
           fi
       - run: wrangler d1 execute health-manager --remote --file=schema.sql
+      - run: node --check src/index.js
       - run: wrangler deploy
+      - name: Verify deployed API is reachable
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 5 --connect-timeout 10 --max-time 20 https://health-manager-api.cw120-park.workers.dev/healthz | node -e 'let s="";process.stdin.on("data",c=>s+=c);process.stdin.on("end",()=>{const r=JSON.parse(s);if(r.ok!==true||r.service!=="health-manager-api")process.exit(1)})'
