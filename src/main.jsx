@@ -32,7 +32,7 @@ function DailyAdvice({d,hc,setD}){
     items.forEach((x,i)=>{const status=intakeStatus(x.value,x.target,true);if(status==='부족')tips.push([x.name+' 부족',foods[i]]);else if(status==='과다')tips.push([x.name+' 목표 범위 초과','오늘의 참고 목표보다 많습니다. 식사량과 음식 구성을 확인하세요.'])});
   }
   if(mins<30)tips.push(['남은 운동','오늘 '+(30-mins)+'분 더 걷거나 가벼운 운동을 해보세요.']);
-  return <section><h2>오늘의 분석</h2><p className="goal-source">{targets.source} · 체중 {targets.weight.value}kg ({targets.weight.label}){targets.configured&&<> · 기초대사량 {targets.bmr} × 활동계수 {targets.activity} · 목표 조정 {targets.adjustment>0?'+':''}{targets.adjustment} kcal</>}</p>
+  return <section><h2>오늘의 분석</h2><p className="goal-source">{targets.source} · 체중 {targets.weight.value}kg ({targets.weight.label}){targets.configured&&<> · 현재 유지 {targets.maintenanceKcal} kcal · 목표 체중 {targets.goalWeight}kg · 목표 체중 기준 {targets.kcal} kcal · 조정 {targets.adjustment>0?'+':''}{targets.adjustment} kcal</>}</p>
     {!targets.configured&&<p className="tip">설정 → 섭취 목표에서 인바디 기초대사량 또는 나이·성별·키를 입력해 주세요.</p>}
     <button type="button" className="sync" disabled={!allAnalyzed&&!complete} onClick={()=>setD(x=>({...x,mealCompletion:{...x.mealCompletion,[t]:!complete}}))}>{complete?'오늘 식사 기록 완료 · 다시 기록하기':'오늘 식사 기록 완료하기'}</button>
     <p className="goal-source">{complete?'완료한 하루 기록 기준으로 평가합니다.':'기록 중에는 하루 목표까지 남은 섭취량을 표시합니다.'}{!allAnalyzed&&meals.length>0?' 미분석 식사가 있어 섭취 합계는 일부 기록 기준입니다.':''}</p>
@@ -53,8 +53,9 @@ function NutritionSettings({d,hc,setD}){
     {field('height','키 (cm)',100,250,'0.1')}</>}<label>평소 활동량<select value={p.activity} onChange={e=>setP({...p,activity:e.target.value})}>{activityLevels.map(([v,label])=><option value={v} key={v}>{label} (×{v})</option>)}</select></label>
     {field('goalWeight','목표 체중 (kg)',30,300,'0.1')}
     {mode==='estimate'&&<><label>계산된 기초대사량 (kcal/일)<input type="text" readOnly value={targets.bmr??''} placeholder="나이·성별·키 입력 후 자동 표시"/></label><p className="goal-source">계산 체중 {targets.weight.value}kg · {targets.weight.label}</p></>}
-    <p>목표 체중이 현재보다 0.5kg 넘게 높으면 +200kcal, 낮으면 −200kcal를 조정합니다. 앱의 참고 조정값이며 기초대사량 아래로 낮추지 않습니다. 평소 활동량에 운동이 포함돼 있어 운동 소모량을 다시 더하지 않습니다.</p>
-    <p><b>하루 {targets.kcal} kcal</b> · {targets.source}<br/>단백질 {targets.protein}g · 지방 {targets.fat}g · 탄수화물 {targets.carbs}g</p>
+    <p>목표 체중으로 기초대사량을 다시 추정하고 활동계수를 곱해 하루 필요 칼로리를 계산합니다. 직접 입력한 기초대사량은 현재 체중을 기준으로 체중 차이 1kg당 10kcal를 반영해 추정합니다. 목표 체중을 바꾸면 아래 값이 바로 달라지며, 저장하면 분석 탭에도 적용됩니다.</p>
+    <p className="goal-source">현재 체중 유지 {targets.maintenanceKcal} kcal · 목표 체중 {targets.goalWeight}kg 유지 추정 {targets.kcal} kcal{targets.floorApplied?' · 현재 기초대사량 하한 적용':''}<br/>목표 달성 기간을 지정하지 않은 유지 열량 추정치입니다. 평소 활동량에 운동이 포함되어 운동 소모량을 다시 더하지 않습니다.</p>
+    <p><b>목표 체중 기준 하루 {targets.kcal} kcal</b> · {targets.source}<br/>단백질 {targets.protein}g · 지방 {targets.fat}g · 탄수화물 {targets.carbs}g</p>
     <p className="goal-source">단백질은 현재 체중 × 1.2g, 지방은 열량의 25%, 탄수화물은 나머지 열량으로 계산합니다. <a href="https://pubmed.ncbi.nlm.nih.gov/2305711/" target="_blank" rel="noreferrer">기초대사량 추정식 출처</a></p>
     <button className="save">섭취 목표 저장</button>{message&&<p role="status">{message}</p>}
   </form></>
