@@ -50,8 +50,9 @@ function NutritionSettings({d,hc,setD}){
     {mode==='manual'?field('bmr','기초대사량 (kcal/일)',500,4000):<>
     <p>나이·성별·키와 최근 체중 기록으로 기초대사량을 자동 계산합니다.</p>
     {field('age','나이 (만 나이)',18,120)}<label>성별<select value={p.sex} onChange={e=>setP({...p,sex:e.target.value})}><option value="">선택</option><option value="male">남성</option><option value="female">여성</option></select></label>
-    {field('height','키 (cm)',100,250,'0.1')}<label>계산된 기초대사량 (kcal/일)<input type="text" readOnly value={targets.bmr??''} placeholder="나이·성별·키 입력 후 자동 표시"/></label><p className="goal-source">계산 체중 {targets.weight.value}kg · {targets.weight.label}</p></>}<label>평소 활동량<select value={p.activity} onChange={e=>setP({...p,activity:e.target.value})}>{activityLevels.map(([v,label])=><option value={v} key={v}>{label} (×{v})</option>)}</select></label>
+    {field('height','키 (cm)',100,250,'0.1')}</>}<label>평소 활동량<select value={p.activity} onChange={e=>setP({...p,activity:e.target.value})}>{activityLevels.map(([v,label])=><option value={v} key={v}>{label} (×{v})</option>)}</select></label>
     {field('goalWeight','목표 체중 (kg)',30,300,'0.1')}
+    {mode==='estimate'&&<><label>계산된 기초대사량 (kcal/일)<input type="text" readOnly value={targets.bmr??''} placeholder="나이·성별·키 입력 후 자동 표시"/></label><p className="goal-source">계산 체중 {targets.weight.value}kg · {targets.weight.label}</p></>}
     <p>목표 체중이 현재보다 0.5kg 넘게 높으면 +200kcal, 낮으면 −200kcal를 조정합니다. 앱의 참고 조정값이며 기초대사량 아래로 낮추지 않습니다. 평소 활동량에 운동이 포함돼 있어 운동 소모량을 다시 더하지 않습니다.</p>
     <p><b>하루 {targets.kcal} kcal</b> · {targets.source}<br/>단백질 {targets.protein}g · 지방 {targets.fat}g · 탄수화물 {targets.carbs}g</p>
     <p className="goal-source">단백질은 현재 체중 × 1.2g, 지방은 열량의 25%, 탄수화물은 나머지 열량으로 계산합니다. <a href="https://pubmed.ncbi.nlm.nih.gov/2305711/" target="_blank" rel="noreferrer">기초대사량 추정식 출처</a></p>
