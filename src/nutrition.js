@@ -17,12 +17,16 @@ export function nutritionTargets(d,hc,today){
   else if(Number(p.age)>=18&&Number(p.age)<=120&&Number(p.height)>=100&&Number(p.height)<=250&&['male','female'].includes(p.sex)){
     bmr=10*w+6.25*Number(p.height)-5*Number(p.age)+(p.sex==='male'?5:-161);source='Mifflin–St Jeor 추정 기초대사량';
   }
-  const delta=Number(p.goalWeight)-w;
-  // Modest product default, shown explicitly; goal weight never replaces current weight in BMR.
-  const adjustment=bmr&&validWeight(p.goalWeight)?Math.abs(delta)<=.5?0:delta>0?200:-200:0;
-  const kcal=Math.round(bmr?Math.max(bmr,bmr*activity+adjustment):w*30);
+  const goalWeight=Number(p.goalWeight)>=30&&Number(p.goalWeight)<=300?Number(p.goalWeight):w;
+  // Estimate maintenance at the goal weight using the Mifflin weight coefficient.
+  // For a manually entered BMR, anchor that estimate to the measured/current BMR.
+  const goalBmr=bmr===null?null:Math.max(0,bmr+10*(goalWeight-w));
+  const maintenanceKcal=Math.round(bmr===null?w*30:bmr*activity);
+  const rawGoalKcal=bmr===null?goalWeight*30:goalBmr*activity;
+  const kcal=Math.round(bmr===null?rawGoalKcal:Math.max(bmr,rawGoalKcal));
+  const adjustment=kcal-maintenanceKcal;
   const protein=Math.round(w*1.2),fat=Math.round(kcal*.25/9),carbs=Math.round(Math.max(0,kcal-protein*4-fat*9)/4);
-  return {kcal,protein,fat,carbs,bmr:bmr===null?null:Math.round(bmr),activity,adjustment,source,weight,configured:bmr!==null};
+  return {kcal,protein,fat,carbs,bmr:bmr===null?null:Math.round(bmr),activity,adjustment,goalWeight,goalBmr:goalBmr===null?null:Math.round(goalBmr),maintenanceKcal,floorApplied:bmr!==null&&rawGoalKcal<bmr,source,weight,configured:bmr!==null};
 }
 export function intakeStatus(value,target,complete){
   if(!complete)return value<target?'남은 '+Math.round(target-value):value>target?'목표 초과 '+Math.round(value-target):'목표 도달';
