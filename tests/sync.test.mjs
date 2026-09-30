@@ -1,0 +1,13 @@
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const {installSync}=await import('data:text/javascript;base64,'+Buffer.from(readFileSync(new URL('../src/sync.js',import.meta.url))).toString('base64'));
+const empty={glucose:[],weight:[],meals:[],exercise:[]};
+function setup(initial={}){const values=new Map(Object.entries(initial)),calls=[],events={},timers=new Map();let id=0;const storage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,String(v))};const win={HealthManager:{loadHealthRecords:()=>calls.push('load'),syncHealthRecords:s=>calls.push(JSON.parse(s))},CustomEvent:class{constructor(type,args){this.type=type;this.detail=args.detail}},dispatchEvent:e=>events[e.type]?.(e),addEventListener:(k,f)=>events[k]=f,document:{visibilityState:'visible',addEventListener(){}},setTimeout:f=>{timers.set(++id,f);return id},clearTimeout:i=>timers.delete(i)};installSync(win,storage,()=>[],empty);return {win,storage,calls,timers,values}}
+const a=setup();a.win.receiveServerRecords([]);a.win.receiveServerSyncResult(200);
+a.storage.setItem('healthData',JSON.stringify({...empty,weight:[{id:1,value:60}]}));assert.equal(a.calls.at(-1).rows[0].payload.healthData.weight[0].value,60);
+const before=a.calls.length;a.storage.setItem('healthData',JSON.stringify({...empty,weight:[{id:1,value:61}]}));assert.equal(a.calls.length,before);a.win.receiveServerSyncResult(200);assert.equal(a.calls.at(-1).rows[0].payload.healthData.weight[0].value,61);
+a.win.receiveServerSyncResult(500);assert.equal(a.storage.getItem('health-sync-pending'),'1');[...a.timers.values()].at(-1)();a.win.receiveServerSyncResult(200);assert.equal(a.storage.getItem('health-sync-pending'),'0');
+a.storage.setItem('healthData',JSON.stringify(empty));assert.deepEqual(a.calls.at(-1).rows[0].payload.healthData.weight,[]);a.win.receiveServerSyncResult(200);
+const state={healthData:empty,healthConnectData:{steps:0,bodyFat:20,history:[{date:'2026-09-30',steps:0}]}};const b=setup();b.win.receiveServerRecords([{id:'app-state-v1',payload:JSON.stringify(state)}]);assert.deepEqual(JSON.parse(b.storage.getItem('healthConnectData')),state.healthConnectData);
+const c=setup({'healthData':JSON.stringify({...empty,weight:[{id:2,value:62}]}),'health-sync-pending':'1'});c.win.receiveServerRestoreError();assert.equal(c.storage.getItem('health-sync-pending'),'1');[...c.timers.values()].at(-1)();c.win.receiveServerRecords([{id:'app-state-v1',payload:state}]);assert.equal(c.calls.at(-1).rows[0].payload.healthData.weight[0].value,62);
+console.log('PASS: immediate save, serialized writes, failure/retry, deletion, complete restore, offline restart');
