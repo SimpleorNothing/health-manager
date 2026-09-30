@@ -7,7 +7,7 @@ export function installSync(win, storage, rowsFor, empty) {
   const read=()=>({healthData:JSON.parse(storage.getItem(keys[0])||JSON.stringify(empty)),healthConnectData:JSON.parse(storage.getItem(keys[1])||'{}')});
   const status=message=>{win.healthServerStatus=message;win.dispatchEvent(new win.CustomEvent('health-server-status',{detail:message}))};
   const later=()=>{win.clearTimeout(retry);retry=win.setTimeout(flush,5000)};
-  const load=()=>{if(loading)return;loading=true;status('기기 저장 유지 · 서버 연결 확인 중');watchdog=win.setTimeout(()=>win.receiveServerRestoreError(),20000);try{bridge.loadHealthRecords()}catch(e){win.receiveServerRestoreError()}};
+  const load=()=>{if(loading)return;loading=true;status('기기 저장 유지 · 서버 연결 확인 중');watchdog=win.setTimeout(()=>win.receiveServerRestoreError(),60000);try{bridge.loadHealthRecords()}catch(e){win.receiveServerRestoreError()}};
   function flush(){
     if(active)return;
     if(!ready){load();return}
