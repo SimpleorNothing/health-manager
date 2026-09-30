@@ -7,7 +7,7 @@ assert.equal(latestWeight(d,{history:[{date:today,weight:61}]},today).value,61);
 assert.equal(latestWeight({weight:[{date:today,value:62}]},{history:[{date:today,weight:61}]},today).value,62);
 assert.equal(nutritionTargets(d,{},today).configured,false);
 const b=nutritionTargets({...d,nutrition:{bmr:'1500',activity:'1.55',goalWeight:'63.6'}},{},today);
-assert.equal(b.kcal,2525);assert.equal(b.adjustment,200);
+assert.equal(b.kcal,2381);assert.equal(b.adjustment,56);assert.equal(b.maintenanceKcal,2325);
 const m=nutritionTargets({...d,nutrition:{age:'50',sex:'male',height:'170',goalWeight:'60'}},{},today);
 assert.equal(m.bmr,1418);assert.equal(m.kcal,1701);
 const f=nutritionTargets({...d,nutrition:{age:'50',sex:'female',height:'170',goalWeight:'60'}},{},today);
@@ -17,3 +17,14 @@ assert.equal(intakeStatus(600,1800,false),'남은 1200');assert.equal(intakeStat
 assert.equal(intakeStatus(2000,1800,false),'목표 초과 200');
 assert.ok(Math.abs(b.protein*4+b.carbs*4+b.fat*9-b.kcal)<=2);
 console.log('PASS: newest valid weight, InBody/formula/fallback, activity/goal adjustment, macro energy, recording/completion');
+
+const profile={weight:[{date:today,value:'59.8'}],nutrition:{age:'49',sex:'male',height:'170',activity:'1.2',goalWeight:'63'}};
+assert.equal(nutritionTargets(profile,{},today).kcal,1743);
+const calories=goal=>nutritionTargets({...profile,nutrition:{...profile.nutrition,goalWeight:String(goal)}},{},today).kcal;
+assert.ok(calories(61)<calories(63)&&calories(63)<calories(65));
+assert.equal(calories(63.1)-calories(63),1);
+assert.equal(calories(59.8),1705);
+assert.equal(nutritionTargets({...d,nutrition:{bmr:1500,activity:'1.2',goalWeight:30}},{},today).kcal,1500);
+for(const invalid of ['',0,-10,301,'oops'])assert.equal(nutritionTargets({...profile,nutrition:{...profile.nutrition,goalWeight:invalid}},{},today).kcal,1705);
+assert.equal(nutritionTargets({...d,nutrition:{bmr:1500,activity:'1.2',goalWeight:63}},{},today).kcal,1836);
+console.log('PASS: goal-weight continuity, manual BMR, maintenance, floor and invalid goal');
