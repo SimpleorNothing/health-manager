@@ -1,5 +1,6 @@
 // Keep this list in release order when user-facing behavior changes.
 export const appChanges = [
+  {date: '2026. 9. 30.', changes: ['인바디 기초대사량·활동량·목표 체중을 반영하는 섭취 목표 설정을 추가했습니다.', '최신 체중 기록을 사용하고, 식사 완료 전에는 남은 섭취량을 표시합니다.', '섭취 목표와 날짜별 식사 완료 상태를 기기와 서버에 함께 저장합니다.']},
   {
     date: '2026. 9. 29.',
     changes: ['입력·수정·삭제 기록을 서버에 자동 저장하고, 새 설치 시 서버 기록을 자동 복원하도록 개선했습니다.'],
