@@ -1,6 +1,10 @@
 // Keep this list in release order when user-facing behavior changes.
 export const appChanges = [
   {
+    date: '2026. 9. 30.',
+    changes: ['데이터 저장 상태를 설정 탭의 매일 할 일과 설정 메뉴 사이에만 표시하도록 옮겼습니다.'],
+  },
+  {
     date: '2026. 9. 29.',
     changes: ['입력·수정·삭제 기록을 서버에 자동 저장하고, 새 설치 시 서버 기록을 자동 복원하도록 개선했습니다.'],
   },
