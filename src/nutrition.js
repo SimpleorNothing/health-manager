@@ -9,18 +9,22 @@ export function latestWeight(d,hc,today){
   if(validWeight(hc.weight))return {value:Number(hc.weight),label:'Health Connect'};
   return {value:61.1,label:'임시 기본 체중 · 체중 기록 필요'};
 }
+// Mifflin–St Jeor (1990): kcal/day, kg, cm, years.
+export function estimateBmr(weight,profile){
+  return 10*weight+6.25*Number(profile.height)-5*Number(profile.age)+(profile.sex==='male'?5:-161);
+}
 export function nutritionTargets(d,hc,today){
   const p={...defaultNutrition,...d.nutrition},weight=latestWeight(d,hc,today),w=weight.value;
   const activity=activityLevels.some(([v])=>v===String(p.activity))?Number(p.activity):1.2;
-  let bmr=null,source='임시 참고치 · 체중 × 30';
+  let bmr=null,estimated=false,source='임시 참고치 · 체중 × 30';
   if(Number(p.bmr)>=500&&Number(p.bmr)<=4000){bmr=Number(p.bmr);source='입력한 인바디 기초대사량'}
   else if(Number(p.age)>=18&&Number(p.age)<=120&&Number(p.height)>=100&&Number(p.height)<=250&&['male','female'].includes(p.sex)){
-    bmr=10*w+6.25*Number(p.height)-5*Number(p.age)+(p.sex==='male'?5:-161);source='Mifflin–St Jeor 추정 기초대사량';
+    bmr=estimateBmr(w,p);estimated=true;source='Mifflin–St Jeor 추정 기초대사량';
   }
   const goalWeight=Number(p.goalWeight)>=30&&Number(p.goalWeight)<=300?Number(p.goalWeight):w;
   // Estimate maintenance at the goal weight using the Mifflin weight coefficient.
   // For a manually entered BMR, anchor that estimate to the measured/current BMR.
-  const goalBmr=bmr===null?null:Math.max(0,bmr+10*(goalWeight-w));
+  const goalBmr=bmr===null?null:estimated?estimateBmr(goalWeight,p):Math.max(0,bmr+10*(goalWeight-w));
   const maintenanceKcal=Math.round(bmr===null?w*30:bmr*activity);
   const rawGoalKcal=bmr===null?goalWeight*30:goalBmr*activity;
   const kcal=Math.round(bmr===null?rawGoalKcal:Math.max(bmr,rawGoalKcal));

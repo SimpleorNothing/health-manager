@@ -28,3 +28,17 @@ assert.equal(nutritionTargets({...d,nutrition:{bmr:1500,activity:'1.2',goalWeigh
 for(const invalid of ['',0,-10,301,'oops'])assert.equal(nutritionTargets({...profile,nutrition:{...profile.nutrition,goalWeight:invalid}},{},today).kcal,1705);
 assert.equal(nutritionTargets({...d,nutrition:{bmr:1500,activity:'1.2',goalWeight:63}},{},today).kcal,1836);
 console.log('PASS: goal-weight continuity, manual BMR, maintenance, floor and invalid goal');
+
+const screenshot={weight:[{date:today,value:59.5}],nutrition:{age:49,sex:'male',height:170,activity:'1.2',goalWeight:63}};
+const inputTargets=changes=>nutritionTargets({...screenshot,nutrition:{...screenshot.nutrition,...changes}},{},today);
+assert.equal(inputTargets({}).bmr,1418);
+assert.equal(inputTargets({}).goalBmr,1453);
+assert.equal(inputTargets({}).kcal,1743);
+assert.equal(inputTargets({age:50}).kcal,1737);
+assert.equal(inputTargets({sex:'female'}).kcal,1544);
+assert.equal(inputTargets({height:180}).kcal,1818);
+assert.equal(inputTargets({activity:'1.55'}).kcal,2251);
+assert.equal(inputTargets({goalWeight:65}).goalBmr,1473);
+assert.equal(inputTargets({goalWeight:65}).kcal,1767);
+assert.equal(inputTargets({goalWeight:63.1}).kcal,1744);
+console.log('PASS: screenshot inputs and changes to age, sex, height, activity, goal weight');
