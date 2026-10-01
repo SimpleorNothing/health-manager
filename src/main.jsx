@@ -1,4 +1,4 @@
-import{defaultNutrition,activityLevels,nutritionTargets,intakeStatus}from'./nutrition';
+import{defaultNutrition,activityLevels,nutritionTargets,intakeDisplay}from'./nutrition';
 import{installSync}from'./sync';
 import React,{useEffect,useRef,useState}from'react';import{createRoot}from'react-dom/client';import{Droplets,Scale,Utensils,Footprints,Home,BarChart3,Target,Settings,Plus,CheckCircle2}from'lucide-react';import{appChanges}from'./changelog';import'./style.css';
 const date=(v=new Date())=>{let d=new Date(v),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`},empty={glucose:[],weight:[],meals:[],exercise:[]};
@@ -25,20 +25,18 @@ function Trends({d,hc}){let byDate={};for(const x of hc.history||[])byDate[x.dat
 function DailyAdvice({d,hc,setD}){
   const t=date(),meals=d.meals.filter(x=>x.date===t),mins=d.exercise.filter(x=>x.date===t).reduce((n,x)=>n+Number(x.minutes||0),0),targets=nutritionTargets(d,hc,t);
   const analyzed=meals.filter(x=>x.analysis).length,complete=!!d.mealCompletion?.[t],allAnalyzed=meals.length>0&&analyzed===meals.length;
-  const items=[['전체 칼로리','kcal','kcal'],['탄수화물','carbs','g'],['단백질','protein','g'],['지방','fat','g']].map(([name,key,unit])=>({name,unit,value:meals.reduce((n,x)=>n+Number(x.analysis?.[key]||0),0),target:targets[key]}));
+  const items=[['전체 칼로리','kcal','kcal'],['탄수화물','carbs','g'],['단백질','protein','g'],['지방','fat','g']].map(([name,key,unit])=>({name,key,unit,value:meals.reduce((n,x)=>n+Number(x.analysis?.[key]||0),0),target:targets[key]}));
   const tips=[];
-  if(complete&&allAnalyzed){
-    const foods=['남은 식사에 통곡물·단백질·채소를 고르게 포함하세요.','잡곡밥·고구마 등 섬유질이 있는 탄수화물을 적당히 포함하세요.','생선·달걀·두부 등 단백질 식품을 포함하세요.','견과류·생선 등 불포화지방을 소량 포함하세요.'];
-    items.forEach((x,i)=>{const status=intakeStatus(x.value,x.target,true);if(status==='부족')tips.push([x.name+' 부족',foods[i]]);else if(status==='과다')tips.push([x.name+' 목표 범위 초과','오늘의 참고 목표보다 많습니다. 식사량과 음식 구성을 확인하세요.'])});
-  }
+  const foods=['통곡물·단백질·채소를 고르게 포함하세요.','잡곡밥·고구마 등 섬유질이 있는 탄수화물을 적당히 포함하세요.','생선·달걀·두부 등 단백질 식품을 포함하세요.','견과류·생선 등 불포화지방을 소량 포함하세요.'];
+  items.forEach((x,i)=>{const display=intakeDisplay(x.key,x.value,x.target,complete,analyzed>0,x.unit);if(['caution','over','info'].includes(display.tone)&&x.value>x.target)tips.push([x.name+' 목표 초과',display.note]);else if(complete&&allAnalyzed&&x.value<x.target*.8)tips.push([x.name+' 부족',foods[i]])});
   if(mins<30)tips.push(['남은 운동','오늘 '+(30-mins)+'분 더 걷거나 가벼운 운동을 해보세요.']);
   return <section><h2>오늘의 분석</h2><p className="goal-source">{targets.source} · 체중 {targets.weight.value}kg ({targets.weight.label}){targets.configured&&<> · 현재 유지 {targets.maintenanceKcal} kcal · 목표 체중 {targets.goalWeight}kg · 목표 체중 기준 {targets.kcal} kcal · 조정 {targets.adjustment>0?'+':''}{targets.adjustment} kcal</>}</p>
     {!targets.configured&&<p className="tip">설정 → 섭취 목표에서 인바디 기초대사량 또는 나이·성별·키를 입력해 주세요.</p>}
     <button type="button" className="sync" disabled={!allAnalyzed&&!complete} onClick={()=>setD(x=>({...x,mealCompletion:{...x.mealCompletion,[t]:!complete}}))}>{complete?'오늘 식사 기록 완료 · 다시 기록하기':'오늘 식사 기록 완료하기'}</button>
-    <p className="goal-source">{complete?'완료한 하루 기록 기준으로 평가합니다.':'기록 중에는 하루 목표까지 남은 섭취량을 표시합니다.'}{!allAnalyzed&&meals.length>0?' 미분석 식사가 있어 섭취 합계는 일부 기록 기준입니다.':''}</p>
-    <div className="setting analysis-list">{[...items,{name:'운동',value:mins,target:30,unit:'분'}].map(x=>{const exercise=x.name==='운동',shown=exercise||analyzed>0,status=exercise?(mins<30?'남은 '+(30-mins)+'분':'목표 도달'):!shown?'기록 필요':intakeStatus(x.value,x.target,complete)+(!complete&&x.value!==x.target?x.unit:'');return <div className="analysis-bar" key={x.name}><div className="analysis-head"><b>{x.name}</b><span>{Math.round(x.value)} {x.unit} / {x.target} {x.unit}</span><strong>{status}</strong></div><div className="analysis-track"><i data-status={complete&&!exercise?intakeStatus(x.value,x.target,true):'none'} style={{width:(shown?Math.min(100,Math.round(x.value/x.target*100)):0)+'%'}}/></div></div>})}</div>
+    <p className="goal-source">{complete?'완료한 하루 기록 기준으로 평가합니다.':'기록 중에도 목표 초과는 바로 표시합니다. 목표 미만이면 남은 섭취량을 표시합니다.'}{!allAnalyzed&&meals.length>0?' 미분석 식사가 있어 섭취 합계는 일부 기록 기준입니다.':''}</p>
+    <div className="setting analysis-list">{[...items,{name:'운동',key:'exercise',value:mins,target:30,unit:'분'}].map(x=>{const shown=x.key==='exercise'||analyzed>0,display=intakeDisplay(x.key,x.value,x.target,complete,shown,x.unit);return <div className="analysis-bar" data-tone={display.tone} key={x.name}><div className="analysis-head"><b>{x.name}</b><span>{Math.round(x.value)} {x.unit} / {x.target} {x.unit}</span><strong>{display.label}</strong></div><div className="analysis-track"><i data-tone={display.tone} style={{width:(shown?Math.min(100,Math.round(x.value/x.target*100)):0)+'%'}}/></div>{display.note&&<p className="analysis-note">{display.note}</p>}</div>})}</div>
     {tips.length>0&&<><h2>오늘 보완할 점</h2><div className="setting action-tips">{tips.map(([title,text])=><div className="action-tip" key={title}><b>{title}</b><p>{text}</p></div>)}</div></>}
-    <small>섭취량과 목표는 참고 추정치입니다. 완료 후 목표의 80% 미만은 부족, 120% 초과는 과다로 표시합니다.</small>
+    <small>섭취량과 목표는 참고 추정치입니다. 칼로리·탄수화물·지방은 목표 초과 시 주황색, 목표의 120% 초과 시 빨간색으로 표시합니다. 단백질 초과는 파란색 참고 표시, 운동 목표 달성은 초록색입니다. 완료 후 80% 미만은 섭취 부족으로 표시합니다. 색상은 의학적 위험도나 진단이 아닌 앱 목표 대비 점검 기준입니다.</small>
   </section>
 }
 function NutritionSettings({d,hc,setD}){
