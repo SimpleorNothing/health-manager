@@ -32,3 +32,17 @@ export function intakeStatus(value,target,complete){
   if(!complete)return value<target?'남은 '+Math.round(target-value):value>target?'목표 초과 '+Math.round(value-target):'목표 도달';
   return value<target*.8?'부족':value>target*1.2?'과다':'적정';
 }
+
+// Display thresholds describe progress against an app target, not medical risk.
+export function intakeDisplay(key,value,target,complete,shown=true,unit='g'){
+  if(!shown||!Number.isFinite(value)||!Number.isFinite(target)||target<=0)return {tone:'neutral',label:'기록 필요',note:''};
+  const diff=Math.round(Math.abs(value-target));
+  if(key==='exercise')return value>=target?{tone:'good',label:'✓ 목표 달성',note:'운동 목표를 채웠습니다.'}:{tone:'neutral',label:`남은 ${diff}${unit}`,note:''};
+  if(value>target){
+    if(key==='protein')return {tone:'info',label:`참고 · 목표 초과 ${diff}${unit}`,note:'목표 초과만으로 해롭다고 판단하지 않습니다. 신장질환으로 단백질 제한을 안내받았다면 개인 기준을 따르세요.'};
+    const notes={kcal:'반복해서 초과하면 목표 체중 관리에 불리할 수 있어요. 며칠간 평균 섭취량과 체중 변화를 확인하세요.',carbs:'한 끼에 몰아 먹었는지, 당류·정제 탄수화물이 많았는지 식후 혈당과 함께 확인하세요.',fat:'총칼로리와 지방의 종류를 확인하세요. 포화지방이 많은 음식의 양을 점검하세요.'};
+    return {tone:value>target*1.2?'over':'caution',label:`⚠ ${value>target*1.2?'초과량 점검':'목표 초과'} ${diff}${unit}`,note:notes[key]||'식사량과 음식 구성을 확인하세요.'};
+  }
+  if(complete)return value<target*.8?{tone:'caution',label:'섭취 부족',note:'하루 기록이 빠짐없이 입력되었는지 확인하세요.'}:{tone:'good',label:'목표 범위',note:''};
+  return {tone:value===target?'good':'neutral',label:value===target?'목표 도달':`남은 ${diff}${unit}`,note:''};
+}
