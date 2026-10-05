@@ -3,7 +3,6 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.*
-import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -41,11 +40,11 @@ class HealthConnectRepository(context:Context){
  }
  suspend fun writeManual(kind:String,id:String,date:String,value:Double?=null,name:String?=null,minutes:Long?=null,kcal:Double?=null,carbs:Double?=null,protein:Double?=null,fat:Double?=null,mealType:String?=null){
   val zone=ZoneId.systemDefault(); val localDate=LocalDate.parse(date); val base=localDate.atTime(12,0).atZone(zone); val instant=base.toInstant()
-  val metadata=Metadata.manualEntry().copy(clientRecordId="health-manager-$kind-$id",clientRecordVersion=System.currentTimeMillis())
+  val metadata=androidx.health.connect.client.records.metadata.Metadata.manualEntry()
   val record:Record=when(kind){
-   "glucose"->BloodGlucoseRecord(time=instant,zoneOffset=base.offset,level=androidx.health.connect.client.units.BloodGlucose.milligramsPerDeciliter(requireNotNull(value)),specimenSource=BloodGlucoseRecord.SPECIMEN_SOURCE_CAPILLARY_BLOOD,mealType=BloodGlucoseRecord.MEAL_TYPE_UNKNOWN,relationToMeal=BloodGlucoseRecord.RELATION_TO_MEAL_UNKNOWN,metadata=metadata)
+   "glucose"->BloodGlucoseRecord(time=instant,zoneOffset=base.offset,level=androidx.health.connect.client.units.BloodGlucose.milligramsPerDeciliter(requireNotNull(value)),specimenSource=BloodGlucoseRecord.SPECIMEN_SOURCE_CAPILLARY_BLOOD,relationToMeal=BloodGlucoseRecord.RELATION_TO_MEAL_UNKNOWN,metadata=metadata)
    "weight"->WeightRecord(time=instant,zoneOffset=base.offset,weight=androidx.health.connect.client.units.Mass.kilograms(requireNotNull(value)),metadata=metadata)
-   "meal"->{ val end=instant.plus(30,ChronoUnit.MINUTES); NutritionRecord(startTime=instant,startZoneOffset=base.offset,endTime=end,endZoneOffset=base.offset,name=name,mealType=when(mealType){"아침"->NutritionRecord.MEAL_TYPE_BREAKFAST;"점심"->NutritionRecord.MEAL_TYPE_LUNCH;"저녁"->NutritionRecord.MEAL_TYPE_DINNER;"간식"->NutritionRecord.MEAL_TYPE_SNACK;else->NutritionRecord.MEAL_TYPE_UNKNOWN},energy=kcal?.let{androidx.health.connect.client.units.Energy.kilocalories(it)},totalCarbohydrate=carbs?.let{androidx.health.connect.client.units.Mass.grams(it)},protein=protein?.let{androidx.health.connect.client.units.Mass.grams(it)},totalFat=fat?.let{androidx.health.connect.client.units.Mass.grams(it)},metadata=metadata) }
+   "meal"->{ val end=instant.plus(30,ChronoUnit.MINUTES); NutritionRecord(startTime=instant,startZoneOffset=base.offset,endTime=end,endZoneOffset=base.offset,name=name,energy=kcal?.let{androidx.health.connect.client.units.Energy.kilocalories(it)},totalCarbohydrate=carbs?.let{androidx.health.connect.client.units.Mass.grams(it)},protein=protein?.let{androidx.health.connect.client.units.Mass.grams(it)},totalFat=fat?.let{androidx.health.connect.client.units.Mass.grams(it)},metadata=metadata) }
    "exercise"->{ val end=instant.plus((minutes?:1).coerceAtLeast(1),ChronoUnit.MINUTES); ExerciseSessionRecord(startTime=instant,startZoneOffset=base.offset,endTime=end,endZoneOffset=base.offset,exerciseType=ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT,title=name,metadata=metadata) }
    else->throw IllegalArgumentException("지원하지 않는 Health Connect 기록: $kind")
   }
