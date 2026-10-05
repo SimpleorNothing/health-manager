@@ -14,7 +14,7 @@ android {
  namespace = "io.github.simpleornothing.healthmanager"; compileSdk = 36
  compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
-    defaultConfig { applicationId = "io.github.simpleornothing.healthmanager"; minSdk = 28; targetSdk = 35; versionCode = 8; versionName = "0.3.4"; buildConfigField("String","HEALTH_API_TOKEN","\""+(System.getenv("HEALTH_API_TOKEN") ?: "")+"\"") }
+    defaultConfig { applicationId = "io.github.simpleornothing.healthmanager"; minSdk = 28; targetSdk = 35; versionCode = 9; versionName = "0.3.5"; buildConfigField("String","HEALTH_API_TOKEN","\""+(System.getenv("HEALTH_API_TOKEN") ?: "")+"\"") }
  buildFeatures { buildConfig = true }
  buildTypes { getByName("release") { isMinifyEnabled = false; signingConfig = signingConfigs.getByName("release") } }
 }
