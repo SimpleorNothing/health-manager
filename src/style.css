@@ -31,3 +31,5 @@
 
 /* Trend chart point interaction */
 .trend-svg .trend-hit{fill:transparent;stroke:none;cursor:pointer}.trend-svg .trend-dot{cursor:pointer}.trend-svg .trend-dot.selected{stroke-width:2}.trend-svg g[role="button"]:focus .trend-dot{stroke-width:2}.trend-tooltip rect{fill:rgba(17,24,39,.92);stroke:none}.trend-tooltip text{fill:#fff;stroke:none;font-size:9px;font-weight:700}.trend-selected{text-align:center;font-size:12px;margin-top:2px;color:var(--muted,#64748b)}
+
+.editable-row{cursor:pointer;touch-action:pan-y}.editable-row:focus-visible{outline:2px solid #087f5b;outline-offset:3px}.record-actions h2{margin:0 0 4px}.record-actions .record-delete{color:#b42318;border-color:#fda29b;background:#fff5f4}
