@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {saveFavoriteFood,deleteFavoriteFood} from '../src/favorite-foods.js';
+let list=saveFavoriteFood(undefined,' 밥  반공기 ');
+assert.equal(list[0].food,'밥 반공기');
+assert.equal(saveFavoriteFood(list,'밥 반공기'),list);
+assert.equal(saveFavoriteFood(list,'   '),list);
+const saved=JSON.parse(JSON.stringify({meals:[],favoriteFoods:list}));
+assert.equal(saved.meals.length,0);
+assert.deepEqual(saved.favoriteFoods,list);
+const original=list[0];
+const edited=saveFavoriteFood(list,'밥 1공기',original.id);
+assert.equal(edited[0].id,original.id);
+assert.equal(edited[0].food,'밥 1공기');
+assert.equal(original.food,'밥 반공기');
+assert.deepEqual(deleteFavoriteFood(edited,original.id),[]);
+assert.equal('analysis' in original,false);
+console.log('PASS: independent favorites registration, duplicate/empty rejection, edit, delete and snapshot persistence');
