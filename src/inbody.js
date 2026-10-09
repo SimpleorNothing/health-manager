@@ -28,6 +28,7 @@ export function parseInBodyCsv(text) {
   return [...new Map(records.map(r=>[r.id,r])).values()].sort((a,b)=>a.measuredAt.localeCompare(b.measuredAt));
 }
 export function mergeInBody(data,records){
+  records=records.map(r=>{const existing=(data.inbody||[]).find(x=>x.measuredAt===r.measuredAt);return existing?{...existing,...Object.fromEntries(Object.entries(r).filter(([,v])=>v!==null&&v!=='')),id:existing.id}:r});
   const inbody=[...new Map([...(data.inbody||[]),...records].map(r=>[r.id,r])).values()].sort((a,b)=>a.measuredAt.localeCompare(b.measuredAt));
   const imported=records.map(r=>({...r,value:String(r.weight)}));
   const weight=[...new Map([...(data.weight||[]),...imported].map(r=>[String(r.id),r])).values()].sort((a,b)=>a.date.localeCompare(b.date)||String(a.measuredAt||'').localeCompare(String(b.measuredAt||'')));
@@ -35,4 +36,23 @@ export function mergeInBody(data,records){
   // An explicit profile/BMR remains authoritative; initialize only a blank BMR.
   if(!nutrition.bmr&&!nutrition.age&&latest.bmr)nutrition.bmr=String(latest.bmr);
   return {...data,inbody,weight,nutrition};
+}
+
+// OCR values are observations, never estimates. Missing optional values stay null.
+export function normalizeInBodyReport(input) {
+  const stamp=String(input.measuredAt||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(stamp))throw Error('측정 날짜와 시간을 확인하세요.');
+  const local=stamp.length===16?stamp+':00':stamp;
+  const measuredAt=local+'+09:00',time=new Date(measuredAt).getTime();
+  if(!Number.isFinite(time)||new Date(time+9*3600000).toISOString().slice(0,19)!==local)throw Error('유효한 측정 날짜와 시간을 입력하세요.');
+  const ranges={weight:[1,500],skeletalMuscleMass:[1,200],bodyFat:[0,100],bodyFatMass:[0,300],bmr:[200,6000],bmi:[1,150],leanBodyMass:[1,400],height:[50,250],age:[1,120],score:[0,200],visceralFatLevel:[1,100],waistHipRatio:[0.1,3],recommendedCalories:[200,10000],targetWeight:[1,500],muscleControl:[-100,100],fatControl:[-100,100]};
+  const record={id:'inbody-report-'+local.replace(/\D/g,''),date:local.slice(0,10),measuredAt,source:'inbody-photo',device:String(input.device||'').slice(0,80)};
+  for(const [key,[min,max]] of Object.entries(ranges)){
+    const raw=input[key];
+    if(raw===null||raw===undefined||String(raw).trim()===''){record[key]=null;continue}
+    const n=Number(raw);if(!Number.isFinite(n)||n<min||n>max)throw Error('측정값을 확인하세요: '+key);record[key]=n;
+  }
+  if(record.weight===null)throw Error('체중을 입력하세요.');
+  if(record.skeletalMuscleMass>record.weight||record.bodyFatMass>record.weight||record.leanBodyMass>record.weight)throw Error('체중보다 큰 체성분 값이 있습니다.');
+  return record;
 }

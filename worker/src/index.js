@@ -1,9 +1,11 @@
+import {analyzeInBodyReport} from './inbody-report.js';
 const json=(data,status=200,origin="*")=>new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json","access-control-allow-origin":origin,"access-control-allow-headers":"authorization,content-type","access-control-allow-methods":"GET,POST,OPTIONS"}});
 function auth(req,env){const h=req.headers.get("authorization")||"";return env.HEALTH_API_TOKEN&&h===`Bearer ${env.HEALTH_API_TOKEN}`;}
 export default {async fetch(req,env){
  const origin=req.headers.get("origin")||"*"; if(req.method==="OPTIONS")return json({ok:true},200,origin);
  const u=new URL(req.url);
  if(u.pathname==='/healthz'&&req.method==='GET')return json({ok:true,service:'health-manager-api'},200,origin);
+ if(u.pathname==="/analyze-inbody"&&req.method==="POST")return analyzeInBodyReport(req,env,json,origin);
  if(u.pathname!=="/analyze-meal"&&u.pathname!=="/analyze-meal-text"&&!auth(req,env))return json({error:"unauthorized"},401,origin);
  if(u.pathname==="/analyze-meal-text"&&req.method==="POST"){
   try{
